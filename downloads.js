@@ -6,18 +6,22 @@
   function trustedUrl(value,download=false){
     try{const url=new URL(value);return url.protocol==='https:'&&url.hostname==='github.com'&&url.pathname.startsWith(`/${REPO}/releases/${download?'download/':''}`)&&!url.username&&!url.password;}catch{return false;}
   }
+  const assetPatterns={windows:/-x64-setup\.exe$/i,ubuntu:/_amd64\.deb$/i,macos:/-x64(?:-internal)?\.dmg$/i};
+  function releaseVersion(tag){const m=String(tag).match(/\/v(\d+)\.(\d+)\.(\d+)(?:-r(\d+))?/);return m?m.slice(1).map(v=>Number(v||0)):[0,0,0,0];}
+  function compareRelease(a,b){const av=releaseVersion(a.tag_name),bv=releaseVersion(b.tag_name);for(let i=0;i<4;i++){if(av[i]!==bv[i])return bv[i]-av[i];}const pre=tag=>{const m=tag.match(/-(alpha|beta)\.(\d+)$/);return m?[m[1]==='beta'?2:1,Number(m[2])]:[3,0];};const ap=pre(a.tag_name),bp=pre(b.tag_name);for(let i=0;i<2;i++){if(ap[i]!==bp[i])return bp[i]-ap[i];}return Date.parse(b.published_at||0)-Date.parse(a.published_at||0);}
   function selectRelease(releases,platform){
+    if(!Object.hasOwn(assetPatterns,platform))return null;
     return releases.filter(r=>!r.draft&&typeof r.tag_name==='string'&&r.tag_name.startsWith(platform+'/')&&trustedUrl(r.html_url)&&Array.isArray(r.assets))
-      .sort((a,b)=>Date.parse(b.published_at||0)-Date.parse(a.published_at||0))
-      .map(release=>({release,asset:release.assets.find(asset=>trustedUrl(asset.browser_download_url,true)&&(platform==='windows'?/-x64-setup\.exe$/i:/_amd64\.deb$/i).test(asset.name))}))
+      .sort(compareRelease)
+      .map(release=>({release,asset:release.assets.find(asset=>trustedUrl(asset.browser_download_url,true)&&assetPatterns[platform].test(asset.name))}))
       .find(item=>item.asset)||null;
   }
   function render(releases){
-    for(const platform of ['windows','ubuntu']){
+    for(const platform of ['windows','ubuntu','macos']){
       const card=document.querySelector(`[data-platform="${platform}"]`),selected=selectRelease(releases,platform);
       if(!selected){card.querySelector('.release-status').textContent='Bộ cài chưa được đăng lên Releases.';continue;}
       const {release,asset}=selected,download=card.querySelector('[data-download]');
-      download.href=asset.browser_download_url;download.textContent=`Tải ${platform==='windows'?'bộ cài .exe':'gói .deb'} ↓`;
+      download.href=asset.browser_download_url;download.textContent=`Tải ${{windows:'bộ cài .exe',ubuntu:'gói .deb',macos:'bộ cài .dmg'}[platform]} ↓`;
       card.querySelector('.release-status').textContent=`${release.tag_name.replace(platform+'/v','')} · ${(asset.size/1024/1024).toFixed(0)} MB`;
       card.querySelector('[data-notes]').href=release.html_url;
       const checksum=release.assets.find(a=>(a.name===asset.name+'.sha256'||a.name==='SHA256SUMS')&&trustedUrl(a.browser_download_url,true));

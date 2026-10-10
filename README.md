@@ -18,3 +18,5 @@ Tạo Release theo từng nền tảng:
 Website chọn Release đã publish gần nhất của mỗi nền tảng có bộ cài đúng định dạng. Draft chưa xuất hiện trên website. File tên `-x64-setup.exe` được dùng cho Windows, `_amd64.deb` cho Ubuntu. Bản beta được hỗ trợ; không dùng `/releases/latest` vì hai nền tảng phát hành độc lập.
 
 Windows beta hiện chưa ký số. Xem ghi chú của bản phát hành trước khi cài. Gửi feedback tại Issues, không đưa cookie, mật khẩu hoặc credential proxy vào báo lỗi.
+
+macOS Intel card đọc release macos/ có DMG. Chọn core/revision trước ngày publish; draft không hiển thị. Chỉ website và asset logo được chép sang repo public.
