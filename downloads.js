@@ -21,6 +21,7 @@
       const card=document.querySelector(`[data-platform="${platform}"]`),selected=selectRelease(releases,platform);
       if(!selected){card.querySelector('.release-status').textContent='Bộ cài chưa được đăng lên Releases.';continue;}
       const {release,asset}=selected,download=card.querySelector('[data-download]');
+      if(platform==='windows')card.querySelector('.badge').textContent=release.prerelease?'BETA':'STABLE';
       download.href=asset.browser_download_url;download.textContent=`Tải ${{windows:'bộ cài .exe',ubuntu:'gói .deb',macos:'bộ cài .dmg'}[platform]} ↓`;
       card.querySelector('.release-status').textContent=`${release.tag_name.replace(platform+'/v','')} · ${(asset.size/1024/1024).toFixed(0)} MB`;
       card.querySelector('[data-notes]').href=release.html_url;
